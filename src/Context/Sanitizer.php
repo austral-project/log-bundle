@@ -35,6 +35,8 @@ final class Sanitizer
   private const int MAX_STRING = 2000;
 
   /**
+   * Sanitizer constructor
+   *
    * @param int $maxDepth
    * @param int $maxItems
    * @param int $maxString
@@ -47,6 +49,8 @@ final class Sanitizer
   }
 
   /**
+   * isSensitiveKey
+   *
    * @param string $key
    *
    * @return bool
@@ -57,6 +61,8 @@ final class Sanitizer
   }
 
   /**
+   * sanitize
+   *
    * @param array<array-key, mixed> $values
    *
    * @return array<array-key, mixed>
@@ -69,6 +75,7 @@ final class Sanitizer
   }
 
   /**
+   * truncate
    * The value in valid UTF-8 (invalid bytes replaced: json_encode() and PostgreSQL refuse them), cut when it is too
    * long.
    *
@@ -88,6 +95,8 @@ final class Sanitizer
   }
 
   /**
+   * value
+   *
    * @param mixed $value
    * @param int   $depth
    *
@@ -110,6 +119,8 @@ final class Sanitizer
   }
 
   /**
+   * array
+   *
    * @param array<array-key, mixed> $values
    * @param int                     $depth
    *

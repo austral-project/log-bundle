@@ -17,11 +17,14 @@ use Austral\LogBundle\Context\ContextCollector;
 use Austral\LogBundle\Context\Sanitizer;
 use Austral\LogBundle\Entity\Interfaces\ErrorLogInterface;
 use Austral\LogBundle\Entity\Interfaces\ErrorOccurrenceInterface;
+use Austral\LogBundle\EntityManager\ErrorLogEntityManager;
 use Austral\LogBundle\Fingerprint\FingerprintGenerator;
+use Austral\LogBundle\Purge\ErrorPurger;
 use Austral\LogBundle\Record\ErrorRecord;
 use Austral\LogBundle\Record\ErrorRecorder;
 use Austral\LogBundle\Record\ErrorRecordFactory;
 use Austral\LogBundle\Repository\ErrorLogRepository;
+use Austral\LogBundle\Status\StatusManager;
 use Austral\LogBundle\Tests\Fixtures\Entity\ErrorLog;
 use Austral\LogBundle\Tests\Fixtures\Entity\ErrorOccurrence;
 use Doctrine\Common\EventManager;
@@ -34,6 +37,7 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Driver\AttributeDriver;
 use Doctrine\ORM\Tools\ResolveTargetEntityListener;
 use Doctrine\ORM\Tools\SchemaTool;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -54,6 +58,11 @@ final class LogKit
   public readonly FingerprintGenerator $fingerprints;
   public readonly ErrorRecordFactory $factory;
   public readonly ErrorRecorder $recorder;
+  public readonly FrozenClock $clock;
+  public readonly EventDispatcher $dispatcher;
+  public readonly ErrorLogEntityManager $errorManager;
+  public readonly StatusManager $statuses;
+  public readonly ErrorPurger $purger;
 
   public function __construct(int $occurrencesLimit = 50, bool $withSchema = true)
   {
@@ -90,6 +99,12 @@ final class LogKit
     $this->factory = new ErrorRecordFactory($this->fingerprints, $this->sanitizer, new ContextCollector($this->sanitizer, $this->requestStack), 'prod');
     $registry = new SingleManagerRegistry($this->doctrine);
     $this->recorder = new ErrorRecorder(fn (): Connection => $this->logConnection, fn (): SingleManagerRegistry => $registry, ErrorLog::class, ErrorOccurrence::class, $occurrencesLimit);
+
+    $this->clock = new FrozenClock('2026-11-26 10:00:00');
+    $this->dispatcher = new EventDispatcher();
+    $this->errorManager = new ErrorLogEntityManager($this->doctrine, $this->dispatcher, ErrorLog::class);
+    $this->statuses = new StatusManager($this->errorManager, $this->dispatcher, $this->clock);
+    $this->purger = new ErrorPurger($registry, $this->dispatcher, ErrorLog::class, ErrorOccurrence::class, $this->clock);
   }
 
   public function __destruct()
@@ -120,6 +135,27 @@ final class LogKit
       'occurredAt' => new \DateTimeImmutable('2026-11-26 10:00:00'),
       'environment' => 'prod',
     ]);
+  }
+
+  /**
+   * An error saved by the recorder, then read with the ORM.
+   *
+   * @param array<string, mixed> $values
+   */
+  public function error(array $values = []): ErrorLog
+  {
+    $record = $this->record($values);
+    if (!$this->recorder->record($record))
+    {
+      throw new \LogicException('Not recorded.', 0, $this->recorder->getLastFailure());
+    }
+    $error = $this->errors()->retrieveByFingerprint($record->fingerprint);
+    if (!$error instanceof ErrorLog)
+    {
+      throw new \LogicException('Not found.');
+    }
+
+    return $error;
   }
 
   public function errors(): ErrorLogRepository

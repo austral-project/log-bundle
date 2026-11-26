@@ -24,48 +24,116 @@ use Doctrine\Common\Collections\Collection;
  */
 interface ErrorLogInterface extends EntityInterface
 {
+  /**
+   * getFingerprint
+   *
+   * @return string
+   */
   public function getFingerprint(): string;
 
   /**
+   * getLevel
    * Highest Monolog level of the occurrences (Monolog\Level value).
+   *
+   * @return int
    */
   public function getLevel(): int;
 
+  /**
+   * getChannel
+   *
+   * @return string
+   */
   public function getChannel(): string;
 
+  /**
+   * getExceptionClass
+   *
+   * @return string|null
+   */
   public function getExceptionClass(): ?string;
 
   /**
+   * getMessage
    * Message of the first occurrence.
+   *
+   * @return string
    */
   public function getMessage(): string;
 
   /**
+   * getFile
    * Path from the root of the project.
+   *
+   * @return string|null
    */
   public function getFile(): ?string;
 
+  /**
+   * getLine
+   *
+   * @return int|null
+   */
   public function getLine(): ?int;
 
+  /**
+   * getStatus
+   *
+   * @return ErrorStatus
+   */
   public function getStatus(): ErrorStatus;
 
   /**
-   * Number of occurrences since the first one, purged occurrences included.
+   * changeStatus
+   * Changes the status and its date; false when the error already has this status.
+   *
+   * @param ErrorStatus        $status
+   * @param \DateTimeImmutable $changedAt
+   *
+   * @return bool
+   */
+  public function changeStatus(ErrorStatus $status, \DateTimeImmutable $changedAt): bool;
+
+  /**
+   * getOccurrences
+   *  Number of occurrences since the first one, purged occurrences included.
+   *
+   * @return int
    */
   public function getOccurrences(): int;
 
+  /**
+   * getFirstSeen
+   *
+   * @return \DateTimeImmutable
+   */
   public function getFirstSeen(): \DateTimeImmutable;
 
+  /**
+   * getLastSeen
+   *
+   * @return \DateTimeImmutable
+   */
   public function getLastSeen(): \DateTimeImmutable;
 
   /**
+   * getRegressedAt
    * Last time a resolved or archived error came back.
+   *
+   * @return \DateTimeImmutable|null
    */
   public function getRegressedAt(): ?\DateTimeImmutable;
 
+  /**
+   * getStatusChangedAt
+   * Last change of the status: by the StatusManager, or by a regression.
+   *
+   * @return \DateTimeImmutable|null
+   */
   public function getStatusChangedAt(): ?\DateTimeImmutable;
 
   /**
+   * getOccurrenceList
    * The occurrences kept, the last one first.
    *
    * @return Collection<int, ErrorOccurrenceInterface>

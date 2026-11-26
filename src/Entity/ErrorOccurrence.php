@@ -32,35 +32,65 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\MappedSuperclass]
 abstract class ErrorOccurrence extends Entity implements ErrorOccurrenceInterface
 {
+  /**
+   * @var string
+   */
   #[ORM\Column(name: 'id', type: Types::STRING, length: 40)]
   #[ORM\Id]
   protected string $id;
 
+  /**
+   * @var ErrorLogInterface
+   */
   #[ORM\ManyToOne(targetEntity: ErrorLogInterface::class, inversedBy: 'occurrenceList')]
   #[ORM\JoinColumn(name: 'error_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
   protected ErrorLogInterface $error;
 
+  /**
+   * @var \DateTimeImmutable
+   */
   #[ORM\Column(name: 'occurred_at', type: Types::DATETIME_IMMUTABLE)]
   protected \DateTimeImmutable $occurredAt;
 
+  /**
+   * @var int
+   */
   #[ORM\Column(name: 'level', type: Types::SMALLINT)]
   protected int $level = 400;
 
+  /**
+   * @var string
+   */
   #[ORM\Column(name: 'message', type: Types::TEXT)]
   protected string $message = '';
 
+  /**
+   * @var string|null
+   */
   #[ORM\Column(name: 'url', type: Types::TEXT, nullable: true)]
   protected ?string $url = null;
 
+  /**
+   * @var string|null
+   */
   #[ORM\Column(name: 'method', type: Types::STRING, length: 10, nullable: true)]
   protected ?string $method = null;
 
+  /**
+   * @var string|null
+   */
   #[ORM\Column(name: 'route', type: Types::STRING, length: 255, nullable: true)]
   protected ?string $route = null;
 
+  /**
+   * @var string|null
+   */
   #[ORM\Column(name: 'user_id', type: Types::STRING, length: 255, nullable: true)]
   protected ?string $userId = null;
 
+  /**
+   * @var string
+   */
   #[ORM\Column(name: 'environment', type: Types::STRING, length: 32)]
   protected string $environment = '';
 
@@ -76,6 +106,9 @@ abstract class ErrorOccurrence extends Entity implements ErrorOccurrenceInterfac
   #[ORM\Column(name: 'context', type: Types::JSON)]
   protected array $context = [];
 
+  /**
+   * ErrorOccurrence constructor
+   */
   public function __construct()
   {
     parent::__construct();
@@ -83,12 +116,17 @@ abstract class ErrorOccurrence extends Entity implements ErrorOccurrenceInterfac
     $this->occurredAt = new \DateTimeImmutable();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function __toString(): string
   {
     return $this->message;
   }
 
   /**
+   * arrayObject
+   *
    * @return array<string, mixed>
    */
   public function arrayObject(): array
@@ -106,53 +144,80 @@ abstract class ErrorOccurrence extends Entity implements ErrorOccurrenceInterfac
     ];
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getError(): ErrorLogInterface
   {
     return $this->error;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getOccurredAt(): \DateTimeImmutable
   {
     return $this->occurredAt;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getLevel(): int
   {
     return $this->level;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getMessage(): string
   {
     return $this->message;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getUrl(): ?string
   {
     return $this->url;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getMethod(): ?string
   {
     return $this->method;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getRoute(): ?string
   {
     return $this->route;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getUserId(): ?string
   {
     return $this->userId;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getEnvironment(): string
   {
     return $this->environment;
   }
 
   /**
-   * @return list<array{class: string, message: string, file: string, line: int, frames: list<array{file: ?string, line: ?int, function: string}>}>
+   * {@inheritDoc}
    */
   public function getTrace(): array
   {
@@ -160,7 +225,7 @@ abstract class ErrorOccurrence extends Entity implements ErrorOccurrenceInterfac
   }
 
   /**
-   * @return array<string, mixed>
+   * {@inheritDoc}
    */
   public function getContext(): array
   {

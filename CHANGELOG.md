@@ -16,5 +16,9 @@ First version of `austral/log-bundle`: the errors of the site, recorded in the d
 - `Fingerprint\FingerprintGenerator`: the occurrences are grouped by class, file from the root of the project, line and message without its values.
 - `Context\Sanitizer` and `Context\ContextCollector`: context of each occurrence (URL, method, route, user id, headers, environment, versions, trace without the arguments), sensitive values masked.
 - `Record\ErrorRecordFactory` and `Record\ErrorRecorder` (`austral.log.recorder`): writes with plain SQL on a second connection (`austral.log.connection`, built by `LogConnectionPass` like the connection `austral_log.connection`), out of the transaction of the application; keeps the last `austral_log.occurrences_limit` occurrences; never throws, and stops trying after a failure until reset.
-- Configuration `austral_log`: `enabled`, `level`, `capture_client_errors`, `connection`, `occurrences_limit`, `entities`.
-- Tests of the configuration, of the container, of the fingerprints, of the masking, of the factory, of the recorder and of the handler on SQLite.
+- `Status\StatusManager` (`austral.log.status_manager`): changes the status of one or several errors, saves the date of the change and dispatches `austral.log.status_changed` (`ErrorStatusChangedEvent`); `ErrorLog::changeStatus()`.
+- A regression (resolved or archived error that comes back) also sets the date of the change of status.
+- `EntityManager\ErrorLogEntityManager` (`austral.entity_manager.error_log`).
+- `austral:log:purge` command and `Purge\ErrorPurger` (`austral.log.purger`): deletes the errors resolved or archived for more than `austral_log.purge.after_days` days, with their occurrences, by batches; `--days`, `--status`, `--dry-run`; dispatches `austral.log.purged` (`ErrorsPurgedEvent`). The new, in progress and ignored errors are never purged.
+- Configuration `austral_log`: `enabled`, `level`, `capture_client_errors`, `connection`, `occurrences_limit`, `purge` (`after_days`, `statuses`), `entities`.
+- Tests of the configuration, of the container, of the fingerprints, of the masking, of the factory, of the recorder, of the handler, of the statuses and of the purge on SQLite.

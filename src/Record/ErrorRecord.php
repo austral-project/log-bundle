@@ -21,6 +21,8 @@ namespace Austral\LogBundle\Record;
 final readonly class ErrorRecord
 {
   /**
+   * ErrorRecord constructor
+   *
    * @param string                                                                                                                                 $fingerprint
    * @param int                                                                                                                                    $level          Monolog\Level value
    * @param string                                                                                                                                 $channel

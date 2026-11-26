@@ -52,6 +52,9 @@ austral_log:
   capture_client_errors: []    # 4xx codes recorded too, e.g. [404, 403]
   connection: default          # Doctrine connection of the tables
   occurrences_limit: 50        # occurrences kept by error, the last ones
+  purge:
+    after_days: 90             # austral:log:purge deletes the errors resolved or archived for 90 days; 0: never
+    statuses: [ resolved, archived ]
   entities:
     error: App\Entity\Austral\LogBundle\ErrorLog
     occurrence: App\Entity\Austral\LogBundle\ErrorOccurrence
@@ -81,6 +84,25 @@ A change of line of the exception (the file was edited) gives a new error.
 
 - a resolved or archived error goes back to `new`, with its regression date;
 - the other statuses are kept: an ignored error stays ignored, its counter goes on.
+
+The status is changed with `austral.log.status_manager`, for one error or several at once (the actions of the back office):
+
+```php
+$statusManager->change($error, ErrorStatus::Resolved);
+$statusManager->changeAll($errors, ErrorStatus::Archived); // number of errors changed
+```
+
+The date of the change is saved; an error that already has the status is left as it is. After the save, `austral.log.status_changed` (`ErrorStatusChangedEvent`, with the previous status) is dispatched for each error that changed. A regression changes the status and its date too, without event: the errors are recorded in SQL, from the logger.
+
+### Purge
+
+```bash
+php bin/console austral:log:purge                     # every day, by cron or Symfony Scheduler
+php bin/console austral:log:purge --dry-run           # counts, deletes nothing
+php bin/console austral:log:purge --days=30 --status=archived
+```
+
+Deletes the errors resolved or archived for more than `purge.after_days` days (since the change of their status), with their occurrences, then dispatches `austral.log.purged` (`ErrorsPurgedEvent`). The new, in progress and ignored errors are never purged: an ignored error must stay ignored, and would come back as new after a purge. `after_days: 0` disables the purge without `--days`.
 
 ### Context of an occurrence
 

@@ -29,6 +29,10 @@ final class ConfigurationTest extends TestCase
       'capture_client_errors' => [],
       'connection' => 'default',
       'occurrences_limit' => 50,
+      'purge' => [
+        'after_days' => 90,
+        'statuses' => ['resolved', 'archived'],
+      ],
       'entities' => [
         'error' => 'App\Entity\Austral\LogBundle\ErrorLog',
         'occurrence' => 'App\Entity\Austral\LogBundle\ErrorOccurrence',
@@ -76,6 +80,32 @@ final class ConfigurationTest extends TestCase
   {
     $this->expectException(InvalidConfigurationException::class);
     $this->process(['capture_client_errors' => [$code]]);
+  }
+
+  public function testThePurge(): void
+  {
+    self::assertSame(['after_days' => 0, 'statuses' => ['archived']], $this->process(['purge' => ['after_days' => 0, 'statuses' => ['archived', 'archived']]])['purge']);
+  }
+
+  /**
+   * @return iterable<string, array{array<string, mixed>}>
+   */
+  public static function invalidPurges(): iterable
+  {
+    yield 'ignored' => [['statuses' => ['ignored']]];
+    yield 'new' => [['statuses' => ['new']]];
+    yield 'no status' => [['statuses' => []]];
+    yield 'negative days' => [['after_days' => -1]];
+  }
+
+  /**
+   * @param array<string, mixed> $purge
+   */
+  #[DataProvider('invalidPurges')]
+  public function testTheNewInProgressAndIgnoredErrorsAreNeverPurged(array $purge): void
+  {
+    $this->expectException(InvalidConfigurationException::class);
+    $this->process(['purge' => $purge]);
   }
 
   public function testAtLeastOneOccurrenceIsKept(): void

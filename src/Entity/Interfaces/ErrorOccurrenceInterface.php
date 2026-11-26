@@ -22,31 +22,73 @@ use Austral\Contracts\Entity\EntityInterface;
  */
 interface ErrorOccurrenceInterface extends EntityInterface
 {
+  /**
+   * getError
+   *
+   * @return ErrorLogInterface
+   */
   public function getError(): ErrorLogInterface;
 
+  /**
+   * getOccurredAt
+   *
+   * @return \DateTimeImmutable
+   */
   public function getOccurredAt(): \DateTimeImmutable;
 
   /**
+   * getLevel
    * Monolog level of this occurrence (Monolog\Level value).
+   *
+   * @return int
    */
   public function getLevel(): int;
 
+  /**
+   * getMessage
+   *
+   * @return string
+   */
   public function getMessage(): string;
 
   /**
+   * getUrl
    * URL of the request, sensitive query parameters masked; null in the console and the workers.
+   *
+   * @return string|null
    */
   public function getUrl(): ?string;
 
+  /**
+   * getMethod
+   *
+   * @return string|null
+   */
   public function getMethod(): ?string;
 
+  /**
+   * getRoute
+   *
+   * @return string|null
+   */
   public function getRoute(): ?string;
 
+  /**
+   * getUserId
+   *
+   * @return string|null
+   */
   public function getUserId(): ?string;
 
+  /**
+   * getEnvironment
+   *
+   * @return string
+   */
   public function getEnvironment(): string;
 
   /**
+   * getTrace
    * The exception and its previous exceptions, each with its frames, without the arguments of the calls;
    * empty when the record has no exception.
    *
@@ -55,6 +97,7 @@ interface ErrorOccurrenceInterface extends EntityInterface
   public function getTrace(): array;
 
   /**
+   * getContext
    * Context of the record, headers and versions, sensitive values masked.
    *
    * @return array<string, mixed>

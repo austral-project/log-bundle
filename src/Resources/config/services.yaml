@@ -1,5 +1,47 @@
 services:
 
+##### Entity manager
+  Austral\LogBundle\EntityManager\ErrorLogEntityManager:
+    arguments:
+      $doctrineEntityManager: '@doctrine.orm.entity_manager'
+      $eventDispatcher: '@event_dispatcher'
+      $class: '%austral.entity.error_log.class%'
+
+  austral.entity_manager.error_log:
+    alias: Austral\LogBundle\EntityManager\ErrorLogEntityManager
+    public: true
+
+##### Statuses and purge
+  Austral\LogBundle\Status\StatusManager:
+    arguments:
+      $errors: '@Austral\LogBundle\EntityManager\ErrorLogEntityManager'
+      $dispatcher: '@event_dispatcher'
+      $clock: '@?clock'
+
+  austral.log.status_manager:
+    alias: Austral\LogBundle\Status\StatusManager
+    public: true
+
+  Austral\LogBundle\Purge\ErrorPurger:
+    arguments:
+      $doctrine: '@doctrine'
+      $dispatcher: '@event_dispatcher'
+      $errorClass: '%austral.entity.error_log.class%'
+      $occurrenceClass: '%austral.entity.error_occurrence.class%'
+      $clock: '@?clock'
+
+  austral.log.purger:
+    alias: Austral\LogBundle\Purge\ErrorPurger
+    public: true
+
+  Austral\LogBundle\Command\PurgeCommand:
+    arguments:
+      $purger: '@Austral\LogBundle\Purge\ErrorPurger'
+      $afterDays: '%austral_log.purge.after_days%'
+      $statuses: '%austral_log.purge.statuses%'
+    tags:
+      - { name: console.command, command: 'austral:log:purge' }
+
 ##### Context of the occurrences
   Austral\LogBundle\Context\Sanitizer: ~
 

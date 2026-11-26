@@ -23,9 +23,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 class AustralLogBundle extends Bundle
 {
   /**
-   * @param ContainerBuilder $container
-   *
-   * @return void
+   * {@inheritDoc}
    */
   public function build(ContainerBuilder $container): void
   {

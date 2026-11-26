@@ -28,6 +28,7 @@ enum ErrorStatus: string
   case Archived = 'archived';
 
   /**
+   * regressions
    * The statuses that go back to New when the error comes back.
    *
    * @return list<self>
@@ -38,6 +39,8 @@ enum ErrorStatus: string
   }
 
   /**
+   * isRegressedByRecurrence
+   *
    * @return bool
    */
   public function isRegressedByRecurrence(): bool
@@ -46,6 +49,7 @@ enum ErrorStatus: string
   }
 
   /**
+   * afterRecurrence
    * Status of the error when it comes back.
    *
    * @return self

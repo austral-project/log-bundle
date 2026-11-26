@@ -33,6 +33,8 @@ final class ErrorRecordFactory
   private const int MAX_EXCEPTIONS = 5;
 
   /**
+   * ErrorRecordFactory constructor
+   *
    * @param FingerprintGenerator $fingerprints
    * @param Sanitizer            $sanitizer
    * @param ContextCollector     $collector
@@ -47,6 +49,8 @@ final class ErrorRecordFactory
   }
 
   /**
+   * create
+   *
    * @param LogRecord $record
    *
    * @return ErrorRecord
@@ -109,6 +113,7 @@ final class ErrorRecordFactory
   }
 
   /**
+   * interpolate
    * The placeholders of PSR-3 ("User {id} not found") replaced by the values of the context, sensitive keys
    * masked.
    *
@@ -140,6 +145,8 @@ final class ErrorRecordFactory
   }
 
   /**
+   * string
+   *
    * @param mixed $value
    *
    * @return string
@@ -165,6 +172,7 @@ final class ErrorRecordFactory
   }
 
   /**
+   * trace
    * The exception and its previous exceptions, with their frames, without the arguments of the calls.
    *
    * @param \Throwable $exception

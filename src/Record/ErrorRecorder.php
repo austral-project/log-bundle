@@ -47,13 +47,24 @@ final class ErrorRecorder implements ResetInterface
    */
   private ?array $tables = null;
 
+  /**
+   * @var bool
+   */
   private bool $disabled = false;
 
+  /**
+   * @var \Throwable|null
+   */
   private ?\Throwable $lastFailure = null;
 
+  /**
+   * @var Connection|null
+   */
   private ?Connection $connection = null;
 
   /**
+   * ErrorRecorder constructor
+   *
    * @param \Closure(): Connection      $connectionFactory austral.log.connection
    * @param \Closure(): ManagerRegistry $doctrineFactory   doctrine
    * @param string                      $errorClass
@@ -70,6 +81,8 @@ final class ErrorRecorder implements ResetInterface
   }
 
   /**
+   * record
+   *
    * @param ErrorRecord $record
    *
    * @return bool false when nothing was saved (see getLastFailure())
@@ -96,6 +109,7 @@ final class ErrorRecorder implements ResetInterface
   }
 
   /**
+   * getLastFailure
    * Why the last record was not saved (missing table, database down...).
    *
    * @return \Throwable|null
@@ -106,17 +120,18 @@ final class ErrorRecorder implements ResetInterface
   }
 
   /**
-   * The workers (Messenger) try again for the next message.
-   *
-   * @return void
+   * {@inheritDoc}
    */
   public function reset(): void
   {
+    // The workers (Messenger) try again for the next message.
     $this->disabled = false;
     $this->lastFailure = null;
   }
 
   /**
+   * write
+   *
    * @param ErrorRecord $record
    *
    * @return void
@@ -164,7 +179,9 @@ final class ErrorRecorder implements ResetInterface
   }
 
   /**
-   * One more occurrence of the error, if it exists. The regression date is set before the status: MySQL reads the
+   * update
+   * One more occurrence of the error, if it exists. A regression changes the status and its date (no event: the
+   * recorder writes in SQL, from the logger). The dates are set before the status: MySQL reads the
    * columns already changed by the same UPDATE, PostgreSQL and SQLite read the old values; this order gives the
    * same result everywhere.
    *
@@ -181,6 +198,7 @@ final class ErrorRecorder implements ResetInterface
         last_seen = :now,
         level = CASE WHEN level < :level THEN :level ELSE level END,
         regressed_at = CASE WHEN status IN (:regressions) THEN :now ELSE regressed_at END,
+        status_changed_at = CASE WHEN status IN (:regressions) THEN :now ELSE status_changed_at END,
         status = CASE WHEN status IN (:regressions) THEN :new ELSE status END
       WHERE fingerprint = :fingerprint",
       [
@@ -206,6 +224,8 @@ final class ErrorRecorder implements ResetInterface
   }
 
   /**
+   * insert
+   *
    * @param string      $table
    * @param ErrorRecord $record
    *
@@ -239,6 +259,7 @@ final class ErrorRecorder implements ResetInterface
   }
 
   /**
+   * purgeOccurrences
    * Only the last occurrences are kept: the ids are UUID v7, in the order of the occurrences.
    *
    * @param string $table
@@ -260,6 +281,7 @@ final class ErrorRecorder implements ResetInterface
   }
 
   /**
+   * tables
    * The tables of the entities of the application, read once from their mapping.
    *
    * @return array{error: string, occurrence: string}
@@ -273,6 +295,8 @@ final class ErrorRecorder implements ResetInterface
   }
 
   /**
+   * table
+   *
    * @param string $class
    *
    * @return string
@@ -289,6 +313,8 @@ final class ErrorRecorder implements ResetInterface
   }
 
   /**
+   * connection
+   *
    * @return Connection
    */
   private function connection(): Connection

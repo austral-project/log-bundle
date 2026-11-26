@@ -34,46 +34,88 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\MappedSuperclass]
 abstract class ErrorLog extends Entity implements ErrorLogInterface
 {
+  /**
+   * @var string
+   */
   #[ORM\Column(name: 'id', type: Types::STRING, length: 40)]
   #[ORM\Id]
   protected string $id;
 
+  /**
+   * @var string
+   */
   #[ORM\Column(name: 'fingerprint', type: Types::STRING, length: 64, unique: true)]
   protected string $fingerprint = '';
 
+  /**
+   * @var int
+   */
   #[ORM\Column(name: 'level', type: Types::SMALLINT)]
   protected int $level = 400;
 
+  /**
+   * @var string
+   */
   #[ORM\Column(name: 'channel', type: Types::STRING, length: 64)]
   protected string $channel = 'app';
 
+  /**
+   * @var string|null
+   */
   #[ORM\Column(name: 'exception_class', type: Types::STRING, length: 255, nullable: true)]
   protected ?string $exceptionClass = null;
 
+  /**
+   * @var string
+   */
   #[ORM\Column(name: 'message', type: Types::TEXT)]
   protected string $message = '';
 
+  /**
+   * @var string|null
+   */
   #[ORM\Column(name: 'file', type: Types::STRING, length: 1024, nullable: true)]
   protected ?string $file = null;
 
+  /**
+   * @var int|null
+   */
   #[ORM\Column(name: 'line', type: Types::INTEGER, nullable: true)]
   protected ?int $line = null;
 
+  /**
+   * @var ErrorStatus
+   */
   #[ORM\Column(name: 'status', type: Types::STRING, length: 20, enumType: ErrorStatus::class)]
   protected ErrorStatus $status = ErrorStatus::New;
 
+  /**
+   * @var int
+   */
   #[ORM\Column(name: 'occurrences', type: Types::INTEGER)]
   protected int $occurrences = 0;
 
+  /**
+   * @var \DateTimeImmutable
+   */
   #[ORM\Column(name: 'first_seen', type: Types::DATETIME_IMMUTABLE)]
   protected \DateTimeImmutable $firstSeen;
 
+  /**
+   * @var \DateTimeImmutable
+   */
   #[ORM\Column(name: 'last_seen', type: Types::DATETIME_IMMUTABLE)]
   protected \DateTimeImmutable $lastSeen;
 
+  /**
+   * @var \DateTimeImmutable|null
+   */
   #[ORM\Column(name: 'regressed_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
   protected ?\DateTimeImmutable $regressedAt = null;
 
+  /**
+   * @var \DateTimeImmutable|null
+   */
   #[ORM\Column(name: 'status_changed_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
   protected ?\DateTimeImmutable $statusChangedAt = null;
 
@@ -84,6 +126,9 @@ abstract class ErrorLog extends Entity implements ErrorLogInterface
   #[ORM\OrderBy(['id' => 'DESC'])]
   protected Collection $occurrenceList;
 
+  /**
+   * ErrorLog constructor
+   */
   public function __construct()
   {
     parent::__construct();
@@ -93,12 +138,17 @@ abstract class ErrorLog extends Entity implements ErrorLogInterface
     $this->occurrenceList = new ArrayCollection();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function __toString(): string
   {
     return $this->message;
   }
 
   /**
+   * arrayObject
+   *
    * @return array<string, mixed>
    */
   public function arrayObject(): array
@@ -118,73 +168,127 @@ abstract class ErrorLog extends Entity implements ErrorLogInterface
     ];
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getFingerprint(): string
   {
     return $this->fingerprint;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getLevel(): int
   {
     return $this->level;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getChannel(): string
   {
     return $this->channel;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getExceptionClass(): ?string
   {
     return $this->exceptionClass;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getMessage(): string
   {
     return $this->message;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getFile(): ?string
   {
     return $this->file;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getLine(): ?int
   {
     return $this->line;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getStatus(): ErrorStatus
   {
     return $this->status;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  public function changeStatus(ErrorStatus $status, \DateTimeImmutable $changedAt): bool
+  {
+    if ($status === $this->status)
+    {
+      return false;
+    }
+    $this->status = $status;
+    $this->statusChangedAt = $changedAt;
+
+    return true;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function getOccurrences(): int
   {
     return $this->occurrences;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getFirstSeen(): \DateTimeImmutable
   {
     return $this->firstSeen;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getLastSeen(): \DateTimeImmutable
   {
     return $this->lastSeen;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getRegressedAt(): ?\DateTimeImmutable
   {
     return $this->regressedAt;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function getStatusChangedAt(): ?\DateTimeImmutable
   {
     return $this->statusChangedAt;
   }
 
   /**
-   * @return Collection<int, ErrorOccurrenceInterface>
+   * {@inheritDoc}
    */
   public function getOccurrenceList(): Collection
   {

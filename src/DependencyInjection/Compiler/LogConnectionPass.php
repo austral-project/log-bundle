@@ -31,9 +31,7 @@ class LogConnectionPass implements CompilerPassInterface
   public const string CONNECTION = 'austral.log.connection';
 
   /**
-   * @param ContainerBuilder $container
-   *
-   * @return void
+   * {@inheritDoc}
    */
   public function process(ContainerBuilder $container): void
   {

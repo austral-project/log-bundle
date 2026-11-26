@@ -13,12 +13,16 @@ declare(strict_types=1);
 
 namespace Austral\LogBundle\Tests\DependencyInjection;
 
+use Austral\LogBundle\Command\PurgeCommand;
 use Austral\LogBundle\DependencyInjection\AustralLogExtension;
 use Austral\LogBundle\DependencyInjection\Compiler\LogConnectionPass;
 use Austral\LogBundle\Entity\Interfaces\ErrorLogInterface;
 use Austral\LogBundle\Entity\Interfaces\ErrorOccurrenceInterface;
+use Austral\LogBundle\EntityManager\ErrorLogEntityManager;
 use Austral\LogBundle\Monolog\ErrorLogHandler;
+use Austral\LogBundle\Purge\ErrorPurger;
 use Austral\LogBundle\Record\ErrorRecorder;
+use Austral\LogBundle\Status\StatusManager;
 use Austral\LogBundle\Tests\Fixtures\Entity\ErrorLog;
 use Austral\LogBundle\Tests\Fixtures\Entity\ErrorOccurrence;
 use Austral\LogBundle\Tests\Fixtures\ExtensionStub;
@@ -26,10 +30,12 @@ use Austral\LogBundle\Tests\Fixtures\LogKit;
 use Austral\LogBundle\Tests\Fixtures\SingleManagerRegistry;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 final class AustralLogExtensionTest extends TestCase
 {
@@ -52,11 +58,15 @@ final class AustralLogExtensionTest extends TestCase
     }
     self::assertTrue($container->getAlias('austral.log.recorder')->isPublic());
     self::assertFalse($container->getAlias('austral.log.monolog_handler')->isPublic(), 'A handler is never read from the container.');
+    self::assertTrue($container->getAlias('austral.entity_manager.error_log')->isPublic());
+    self::assertTrue($container->getAlias('austral.log.status_manager')->isPublic());
+    self::assertTrue($container->getAlias('austral.log.purger')->isPublic());
+    self::assertSame([['command' => 'austral:log:purge']], $container->getDefinition(PurgeCommand::class)->getTag('console.command'));
   }
 
   public function testTheParameters(): void
   {
-    $container = $this->load(['level' => 'critical', 'capture_client_errors' => [404], 'connection' => 'logs', 'occurrences_limit' => 10]);
+    $container = $this->load(['level' => 'critical', 'capture_client_errors' => [404], 'connection' => 'logs', 'occurrences_limit' => 10, 'purge' => ['after_days' => 30, 'statuses' => ['archived']]]);
 
     self::assertSame(ErrorLog::class, $container->getParameter('austral.entity.error_log.class'));
     self::assertSame(ErrorOccurrence::class, $container->getParameter('austral.entity.error_occurrence.class'));
@@ -64,6 +74,8 @@ final class AustralLogExtensionTest extends TestCase
     self::assertSame([404], $container->getParameter('austral_log.capture_client_errors'));
     self::assertSame('logs', $container->getParameter('austral_log.connection'));
     self::assertSame(10, $container->getParameter('austral_log.occurrences_limit'));
+    self::assertSame(30, $container->getParameter('austral_log.purge.after_days'));
+    self::assertSame(['archived'], $container->getParameter('austral_log.purge.statuses'));
   }
 
   public function testTheHandlerAndTheEntitiesAreAddedWithoutRecipe(): void
@@ -113,14 +125,23 @@ final class AustralLogExtensionTest extends TestCase
       ->setArguments([['driver' => 'pdo_sqlite', 'path' => '/nonexistent/folder/austral.sqlite']])
       ->setPublic(true);
     $container->register('doctrine', SingleManagerRegistry::class)->setSynthetic(true);
+    $container->register('doctrine.orm.entity_manager', EntityManagerInterface::class)->setSynthetic(true);
+    $container->register('event_dispatcher', EventDispatcher::class)->setSynthetic(true);
     $container->setAlias('test.monolog_handler', ErrorLogHandler::class)->setPublic(true);
     $container->addCompilerPass(new LogConnectionPass());
     $container->compile();
-    $container->set('doctrine', new SingleManagerRegistry(new LogKit()->doctrine));
+    $kit = new LogKit();
+    $container->set('doctrine', new SingleManagerRegistry($kit->doctrine));
+    $container->set('doctrine.orm.entity_manager', $kit->doctrine);
+    $container->set('event_dispatcher', $kit->dispatcher);
 
     self::assertInstanceOf(ErrorRecorder::class, $container->get('austral.log.recorder'));
     self::assertInstanceOf(ErrorLogHandler::class, $container->get('test.monolog_handler'));
     self::assertNull($container->get('austral.log.recorder')->getLastFailure(), 'Nothing is opened before an error.');
+    self::assertInstanceOf(ErrorLogEntityManager::class, $container->get('austral.entity_manager.error_log'));
+    self::assertSame(ErrorLog::class, $container->get('austral.entity_manager.error_log')->getClass());
+    self::assertInstanceOf(StatusManager::class, $container->get('austral.log.status_manager'));
+    self::assertInstanceOf(ErrorPurger::class, $container->get('austral.log.purger'));
   }
 
   /**

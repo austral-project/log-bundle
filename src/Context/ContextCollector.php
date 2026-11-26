@@ -29,6 +29,8 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 final class ContextCollector
 {
   /**
+   * ContextCollector constructor
+   *
    * @param Sanitizer                  $sanitizer
    * @param RequestStack|null          $requestStack
    * @param TokenStorageInterface|null $tokenStorage symfony/security-core is optional
@@ -41,6 +43,8 @@ final class ContextCollector
   }
 
   /**
+   * request
+   *
    * @return array{url: ?string, method: ?string, route: ?string, headers: array<array-key, mixed>}
    */
   public function request(): array
@@ -62,6 +66,7 @@ final class ContextCollector
   }
 
   /**
+   * userId
    * Id of the logged in user, when it is an Austral entity.
    *
    * @return string|null
@@ -74,6 +79,7 @@ final class ContextCollector
   }
 
   /**
+   * url
    * The URL with the sensitive parameters of the query masked. An untrusted host (trusted_hosts) is not read.
    *
    * @param Request $request

@@ -40,6 +40,8 @@ final class FingerprintGenerator
   ];
 
   /**
+   * FingerprintGenerator constructor
+   *
    * @param string $projectDir
    */
   public function __construct(
@@ -48,6 +50,7 @@ final class FingerprintGenerator
   }
 
   /**
+   * generate
    * SHA-256 of the parts, 64 hexadecimal characters.
    *
    * @param string      $type    class of the exception, or channel of the record
@@ -68,6 +71,7 @@ final class FingerprintGenerator
   }
 
   /**
+   * normalize
    * The message without its values: "User 12 not found" and "User 13 not found" give the same message.
    *
    * @param string $message
@@ -82,6 +86,7 @@ final class FingerprintGenerator
   }
 
   /**
+   * relativePath
    * The path from the root of the project; the other paths (vendor out of the project...) are kept.
    *
    * @param string|null $file

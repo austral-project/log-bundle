@@ -32,15 +32,12 @@ class AustralLogExtension extends Extension implements PrependExtensionInterface
   public const string MONOLOG_HANDLER = 'austral_log';
 
   /**
-   * The Monolog handler and the interfaces of the associations are added before the configuration of the
-   * application: the bundle records the errors without its recipe.
-   *
-   * @param ContainerBuilder $container
-   *
-   * @return void
+   * {@inheritDoc}
    */
   public function prepend(ContainerBuilder $container): void
   {
+    // The Monolog handler and the interfaces of the associations are added before the configuration of the
+    // application: the bundle records the errors without its recipe.
     $config = $this->processConfiguration(new Configuration(), $container->getExtensionConfig($this->getAlias()));
 
     if ($container->hasExtension('doctrine'))
@@ -71,6 +68,8 @@ class AustralLogExtension extends Extension implements PrependExtensionInterface
   }
 
   /**
+   * load
+   *
    * @param array<array-key, mixed> $configs
    * @param ContainerBuilder        $container
    *
@@ -85,13 +84,15 @@ class AustralLogExtension extends Extension implements PrependExtensionInterface
     $container->setParameter('austral_log.capture_client_errors', $config['capture_client_errors']);
     $container->setParameter('austral_log.connection', $config['connection']);
     $container->setParameter('austral_log.occurrences_limit', $config['occurrences_limit']);
+    $container->setParameter('austral_log.purge.after_days', $config['purge']['after_days']);
+    $container->setParameter('austral_log.purge.statuses', $config['purge']['statuses']);
 
     $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
     $loader->load('services.yaml');
   }
 
   /**
-   * @return string
+   * {@inheritDoc}
    */
   public function getNamespace(): string
   {

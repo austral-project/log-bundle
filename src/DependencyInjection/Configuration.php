@@ -23,6 +23,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  *   capture_client_errors: HTTP codes of the visitors' errors (4xx) recorded too, none by default
  *   connection:         Doctrine connection of the tables; the errors are written by a second connection
  *   occurrences_limit:  occurrences kept by error (the last ones)
+ *   purge:              austral:log:purge deletes the resolved and archived errors after X days
  *   entities:           classes of the application (error, occurrence)
  *
  * @author Matthieu Beurel <matthieu@austral.dev>
@@ -32,7 +33,7 @@ class Configuration implements ConfigurationInterface
   public const array LEVELS = ['error', 'critical', 'alert', 'emergency'];
 
   /**
-   * @return TreeBuilder
+   * {@inheritDoc}
    */
   public function getConfigTreeBuilder(): TreeBuilder
   {
@@ -51,6 +52,21 @@ class Configuration implements ConfigurationInterface
         ->end()
         ->scalarNode('connection')->cannotBeEmpty()->defaultValue('default')->info('Doctrine connection of the tables of the errors')->end()
         ->integerNode('occurrences_limit')->min(1)->max(1000)->defaultValue(50)->info('Occurrences kept by error, the last ones')->end()
+        ->arrayNode('purge')
+          ->addDefaultsIfNotSet()
+          ->children()
+            ->integerNode('after_days')->min(0)->defaultValue(90)->info('Days since the change of the status; 0: no purge')->end()
+            ->arrayNode('statuses')
+              ->info('Statuses purged; the new, in progress and ignored errors are never purged')
+              ->enumPrototype()->values(['resolved', 'archived'])->end()
+              ->defaultValue(['resolved', 'archived'])
+              ->requiresAtLeastOneElement()
+              ->validate()
+                ->always(static fn (array $statuses): array => array_values(array_unique($statuses)))
+              ->end()
+            ->end()
+          ->end()
+        ->end()
         ->arrayNode('entities')
           ->addDefaultsIfNotSet()
           ->children()

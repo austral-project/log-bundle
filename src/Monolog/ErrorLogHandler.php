@@ -35,9 +35,14 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
  */
 final class ErrorLogHandler extends AbstractProcessingHandler
 {
+  /**
+   * @var bool
+   */
   private bool $writing = false;
 
   /**
+   * ErrorLogHandler constructor
+   *
    * @param ErrorRecordFactory $factory
    * @param ErrorRecorder      $recorder
    * @param string             $level               Monolog level name (error, critical...)
@@ -53,9 +58,7 @@ final class ErrorLogHandler extends AbstractProcessingHandler
   }
 
   /**
-   * @param LogRecord $record
-   *
-   * @return bool
+   * {@inheritDoc}
    */
   public function isHandling(LogRecord $record): bool
   {
@@ -63,20 +66,17 @@ final class ErrorLogHandler extends AbstractProcessingHandler
   }
 
   /**
-   * Called by Monolog\Logger::reset() (kernel.reset of the workers).
-   *
-   * @return void
+   * {@inheritDoc}
    */
   public function reset(): void
   {
+    // Called by Monolog\Logger::reset() (kernel.reset of the workers): the recorder tries the database again.
     parent::reset();
     $this->recorder->reset();
   }
 
   /**
-   * @param LogRecord $record
-   *
-   * @return void
+   * {@inheritDoc}
    */
   protected function write(LogRecord $record): void
   {
@@ -96,6 +96,8 @@ final class ErrorLogHandler extends AbstractProcessingHandler
   }
 
   /**
+   * isClientError
+   *
    * @param LogRecord $record
    *
    * @return bool

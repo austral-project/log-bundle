@@ -24,6 +24,8 @@ use Austral\LogBundle\Entity\Interfaces\ErrorLogInterface;
 class ErrorLogRepository extends EntityRepository
 {
   /**
+   * retrieveByFingerprint
+   *
    * @param string $fingerprint
    *
    * @return ErrorLogInterface|null
