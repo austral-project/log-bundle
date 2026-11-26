@@ -21,21 +21,21 @@ namespace Austral\LogBundle\Record;
 final readonly class ErrorRecord
 {
   /**
-   * @param string                                                                                                                         $fingerprint
-   * @param int                                                                                                                            $level          Monolog\Level value
-   * @param string                                                                                                                         $channel
-   * @param string|null                                                                                                                    $exceptionClass
-   * @param string                                                                                                                         $message
-   * @param string|null                                                                                                                    $file           from the root of the project
-   * @param int|null                                                                                                                       $line
-   * @param \DateTimeImmutable                                                                                                             $occurredAt
-   * @param string                                                                                                                         $environment
-   * @param string|null                                                                                                                    $url
-   * @param string|null                                                                                                                    $method
-   * @param string|null                                                                                                                    $route
-   * @param string|null                                                                                                                    $userId
+   * @param string                                                                                                                                 $fingerprint
+   * @param int                                                                                                                                    $level          Monolog\Level value
+   * @param string                                                                                                                                 $channel
+   * @param string|null                                                                                                                            $exceptionClass
+   * @param string                                                                                                                                 $message
+   * @param string|null                                                                                                                            $file           from the root of the project
+   * @param int|null                                                                                                                               $line
+   * @param \DateTimeImmutable                                                                                                                     $occurredAt
+   * @param string                                                                                                                                 $environment
+   * @param string|null                                                                                                                            $url
+   * @param string|null                                                                                                                            $method
+   * @param string|null                                                                                                                            $route
+   * @param string|null                                                                                                                            $userId
    * @param list<array{class: string, message: string, file: string, line: int, frames: list<array{file: ?string, line: ?int, function: string}>}> $trace
-   * @param array<string, mixed>                                                                                                           $context
+   * @param array<string, mixed>                                                                                                                   $context
    */
   public function __construct(
     public string $fingerprint,

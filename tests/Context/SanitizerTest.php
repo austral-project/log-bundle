@@ -82,7 +82,7 @@ final class SanitizerTest extends TestCase
     self::assertSame(\RuntimeException::class, $sanitized['exception']);
     self::assertSame('object(stdClass)', $sanitized['object']);
     self::assertSame('resource (stream)', $sanitized['resource']);
-    self::assertIsString(json_encode($sanitized, \JSON_THROW_ON_ERROR));
+    self::assertJson(json_encode($sanitized, \JSON_THROW_ON_ERROR));
   }
 
   public function testTheSizeIsLimited(): void
