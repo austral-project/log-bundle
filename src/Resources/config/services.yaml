@@ -1,0 +1,45 @@
+services:
+
+##### Context of the occurrences
+  Austral\LogBundle\Context\Sanitizer: ~
+
+  Austral\LogBundle\Fingerprint\FingerprintGenerator:
+    arguments:
+      $projectDir: '%kernel.project_dir%'
+
+  Austral\LogBundle\Context\ContextCollector:
+    arguments:
+      $sanitizer: '@Austral\LogBundle\Context\Sanitizer'
+      $requestStack: '@?request_stack'
+      $tokenStorage: '@?security.token_storage'
+
+  Austral\LogBundle\Record\ErrorRecordFactory:
+    arguments:
+      $fingerprints: '@Austral\LogBundle\Fingerprint\FingerprintGenerator'
+      $sanitizer: '@Austral\LogBundle\Context\Sanitizer'
+      $collector: '@Austral\LogBundle\Context\ContextCollector'
+      $environment: '%kernel.environment%'
+
+##### Recording (austral.log.connection is defined by LogConnectionPass)
+  Austral\LogBundle\Record\ErrorRecorder:
+    arguments:
+      $connectionFactory: !service_closure '@austral.log.connection'
+      $doctrineFactory: !service_closure '@doctrine'
+      $errorClass: '%austral.entity.error_log.class%'
+      $occurrenceClass: '%austral.entity.error_occurrence.class%'
+      $occurrencesLimit: '%austral_log.occurrences_limit%'
+
+  austral.log.recorder:
+    alias: Austral\LogBundle\Record\ErrorRecorder
+    public: true
+
+##### Monolog handler, added to monolog by AustralLogExtension::prepend()
+  Austral\LogBundle\Monolog\ErrorLogHandler:
+    arguments:
+      $factory: '@Austral\LogBundle\Record\ErrorRecordFactory'
+      $recorder: '@Austral\LogBundle\Record\ErrorRecorder'
+      $level: '%austral_log.level%'
+      $captureClientErrors: '%austral_log.capture_client_errors%'
+
+  austral.log.monolog_handler:
+    alias: Austral\LogBundle\Monolog\ErrorLogHandler
