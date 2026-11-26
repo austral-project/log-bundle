@@ -18,6 +18,7 @@ use Austral\EntityBundle\AustralEntityBundle;
 use Austral\EntityFileBundle\AustralEntityFileBundle;
 use Austral\FilterBundle\AustralFilterBundle;
 use Austral\FormBundle\AustralFormBundle;
+use Austral\HttpBundle\AustralHttpBundle;
 use Austral\ListBundle\AustralListBundle;
 use Austral\LogBundle\AustralLogBundle;
 use Austral\LogBundle\Tests\Fixtures\Entity\ErrorLog;
@@ -60,6 +61,7 @@ final class AdminKernel extends Kernel
     yield new DoctrineBundle();
     yield new AustralToolsBundle();
     yield new AustralEntityBundle();
+    yield new AustralHttpBundle();
     yield new AustralEntityFileBundle();
     yield new AustralFormBundle();
     yield new AustralListBundle();
