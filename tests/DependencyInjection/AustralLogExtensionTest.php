@@ -13,7 +13,11 @@ declare(strict_types=1);
 
 namespace Austral\LogBundle\Tests\DependencyInjection;
 
+use Austral\AdminBundle\AustralAdminBundle;
+use Austral\LogBundle\Bridge\Admin\ErrorLogAdmin;
+use Austral\LogBundle\Bridge\Admin\Listener\ConfigurationCheckListener;
 use Austral\LogBundle\Command\PurgeCommand;
+use Austral\LogBundle\Command\ReportCommand;
 use Austral\LogBundle\DependencyInjection\AustralLogExtension;
 use Austral\LogBundle\DependencyInjection\Compiler\LogConnectionPass;
 use Austral\LogBundle\Entity\Interfaces\ErrorLogInterface;
@@ -22,10 +26,12 @@ use Austral\LogBundle\EntityManager\ErrorLogEntityManager;
 use Austral\LogBundle\Monolog\ErrorLogHandler;
 use Austral\LogBundle\Purge\ErrorPurger;
 use Austral\LogBundle\Record\ErrorRecorder;
+use Austral\LogBundle\Report\ErrorReporter;
 use Austral\LogBundle\Status\StatusManager;
 use Austral\LogBundle\Tests\Fixtures\Entity\ErrorLog;
 use Austral\LogBundle\Tests\Fixtures\Entity\ErrorOccurrence;
 use Austral\LogBundle\Tests\Fixtures\ExtensionStub;
+use Austral\LogBundle\Tests\Fixtures\FakeMailer;
 use Austral\LogBundle\Tests\Fixtures\LogKit;
 use Austral\LogBundle\Tests\Fixtures\SingleManagerRegistry;
 use Doctrine\DBAL\Connection;
@@ -36,6 +42,7 @@ use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Twig\Environment;
 
 final class AustralLogExtensionTest extends TestCase
 {
@@ -142,6 +149,85 @@ final class AustralLogExtensionTest extends TestCase
     self::assertSame(ErrorLog::class, $container->get('austral.entity_manager.error_log')->getClass());
     self::assertInstanceOf(StatusManager::class, $container->get('austral.log.status_manager'));
     self::assertInstanceOf(ErrorPurger::class, $container->get('austral.log.purger'));
+  }
+
+  public function testNoReportByDefault(): void
+  {
+    $container = $this->load();
+
+    self::assertFalse($container->hasDefinition(ErrorReporter::class));
+    self::assertFalse($container->hasDefinition(ReportCommand::class));
+    self::assertFalse($container->hasAlias('austral.log.reporter'));
+  }
+
+  public function testTheReport(): void
+  {
+    $container = $this->load(['report' => ['enabled' => true, 'frequency' => 'weekly', 'recipients' => ['dev@austral.dev'], 'from' => 'no-reply@austral.dev', 'subject' => 'Errors', 'limit' => 20]]);
+
+    self::assertSame('weekly', $container->getParameter('austral_log.report.frequency'));
+    self::assertSame(['dev@austral.dev'], $container->getParameter('austral_log.report.recipients'));
+    self::assertSame('no-reply@austral.dev', $container->getParameter('austral_log.report.from'));
+    self::assertSame('Errors', $container->getParameter('austral_log.report.subject'));
+    self::assertSame(20, $container->getParameter('austral_log.report.limit'));
+    self::assertTrue($container->getAlias('austral.log.reporter')->isPublic());
+    self::assertSame([['command' => 'austral:log:report']], $container->getDefinition(ReportCommand::class)->getTag('console.command'));
+    foreach ([ErrorReporter::class, ReportCommand::class] as $id)
+    {
+      self::assertFalse($container->getDefinition($id)->isAutowired());
+      self::assertFalse($container->getDefinition($id)->isPublic());
+    }
+  }
+
+  public function testTheReportIsBuilt(): void
+  {
+    $kit = new LogKit();
+    $container = $this->load(['report' => ['enabled' => true, 'recipients' => ['dev@austral.dev'], 'from' => 'no-reply@austral.dev']]);
+    foreach (['doctrine' => SingleManagerRegistry::class, 'mailer' => FakeMailer::class, 'twig' => Environment::class] as $id => $class)
+    {
+      $container->register($id, $class)->setSynthetic(true);
+    }
+    $container->setAlias('test.reporter', ErrorReporter::class)->setPublic(true);
+    $container->setAlias('test.report_command', ReportCommand::class)->setPublic(true);
+    $container->setDefinition('doctrine.dbal.connection', new Definition(Connection::class))->setFactory([DriverManager::class, 'getConnection'])->setAbstract(true);
+    $container->setDefinition('doctrine.dbal.default_connection', new ChildDefinition('doctrine.dbal.connection'))->setArguments([['driver' => 'pdo_sqlite', 'memory' => true]]);
+    $container->register('doctrine.orm.entity_manager', EntityManagerInterface::class)->setSynthetic(true);
+    $container->register('event_dispatcher', EventDispatcher::class)->setSynthetic(true);
+    $container->addCompilerPass(new LogConnectionPass());
+    $container->compile();
+    $container->set('doctrine', $kit->registry);
+    $container->set('mailer', new FakeMailer());
+    $container->set('twig', LogKit::twig());
+    $container->set('doctrine.orm.entity_manager', $kit->doctrine);
+    $container->set('event_dispatcher', $kit->dispatcher);
+
+    self::assertInstanceOf(ErrorReporter::class, $container->get('test.reporter'));
+    self::assertInstanceOf(ReportCommand::class, $container->get('test.report_command'));
+  }
+
+  public function testNoBridgeWithoutTheAdmin(): void
+  {
+    $container = $this->load();
+
+    self::assertFalse($container->hasDefinition(ErrorLogAdmin::class));
+    self::assertFalse($container->hasDefinition(ConfigurationCheckListener::class));
+  }
+
+  public function testTheBridgeWithTheAdmin(): void
+  {
+    $container = new ContainerBuilder();
+    $container->setParameter('kernel.project_dir', LogKit::PROJECT_DIR);
+    $container->setParameter('kernel.environment', 'test');
+    $container->setParameter('kernel.bundles', ['AustralAdminBundle' => AustralAdminBundle::class]);
+    new AustralLogExtension()->load([self::CONFIG], $container);
+
+    self::assertSame([[]], $container->getDefinition(ErrorLogAdmin::class)->getTag('austral.admin'));
+    self::assertSame([['event' => 'austral.admin.configuration_check']], $container->getDefinition(ConfigurationCheckListener::class)->getTag('kernel.event_listener'));
+    foreach ([ErrorLogAdmin::class, ConfigurationCheckListener::class] as $id)
+    {
+      self::assertFalse($container->getDefinition($id)->isAutowired());
+      self::assertFalse($container->getDefinition($id)->isPublic());
+    }
+    self::assertTrue($container->getParameter('austral_log.enabled'));
   }
 
   /**

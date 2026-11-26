@@ -1,0 +1,16 @@
+# Services of the bridge with admin-bundle, loaded only when AustralAdminBundle is enabled (AustralLogExtension).
+services:
+
+  Austral\LogBundle\Bridge\Admin\ErrorLogAdmin:
+    arguments:
+      $statusManager: '@Austral\LogBundle\Status\StatusManager'
+      $urls: '@austral.admin.url_generator'
+    tags:
+      - { name: austral.admin }
+
+  Austral\LogBundle\Bridge\Admin\Listener\ConfigurationCheckListener:
+    arguments:
+      $errors: '@Austral\LogBundle\EntityManager\ErrorLogEntityManager'
+      $recordingEnabled: '%austral_log.enabled%'
+    tags:
+      - { name: kernel.event_listener, event: 'austral.admin.configuration_check' }

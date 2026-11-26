@@ -55,6 +55,13 @@ austral_log:
   purge:
     after_days: 90             # austral:log:purge deletes the errors resolved or archived for 90 days; 0: never
     statuses: [ resolved, archived ]
+  report:
+    enabled: false             # austral:log:report: email of the new errors (symfony/mailer, twig/twig)
+    frequency: daily           # hourly, daily or weekly
+    recipients: [ dev@example.com ]
+    from: no-reply@example.com
+    subject: Errors of the site
+    limit: 50                  # errors listed in the email, the others are counted
   entities:
     error: App\Entity\Austral\LogBundle\ErrorLog
     occurrence: App\Entity\Austral\LogBundle\ErrorOccurrence
@@ -104,6 +111,33 @@ php bin/console austral:log:purge --days=30 --status=archived
 
 Deletes the errors resolved or archived for more than `purge.after_days` days (since the change of their status), with their occurrences, then dispatches `austral.log.purged` (`ErrorsPurgedEvent`). The new, in progress and ignored errors are never purged: an ignored error must stay ignored, and would come back as new after a purge. `after_days: 0` disables the purge without `--days`.
 
+### Email report
+
+Never one email by error: a report of the new errors and of the regressions since the last report, at the chosen frequency, and nothing when there is nothing new.
+
+```bash
+composer require symfony/mailer twig/twig
+```
+
+```yaml
+austral_log:
+  report:
+    enabled: true
+    frequency: daily
+    recipients: [ dev@example.com ]
+    from: no-reply@example.com
+```
+
+```bash
+php bin/console austral:log:report            # every hour, by cron or Symfony Scheduler, whatever the frequency
+php bin/console austral:log:report --force    # now, whatever the frequency
+php bin/console austral:log:report --dry-run  # lists the errors of the report, sends nothing
+```
+
+The command sends at most one report by period (with a margin of five minutes for the cron). A report lists the new errors never reported, and the errors that came back after the last report that listed them; the ignored, in progress, resolved and archived errors are not reported. The errors are marked as reported only once the email is sent: a failed sending is retried at the next run.
+
+The email has an HTML and a text version. Override them in `templates/bundles/AustralLogBundle/email/report.html.twig` and `report.txt.twig` (variables: `report`, an `ErrorReport`, and `subject`).
+
 ### Context of an occurrence
 
 The URL, the method and the route of the request, the id of the logged in user (when it is an Austral entity), the environment, the request headers, the context and the extra of the record, the PHP and Symfony versions, and the trace of the exception and of its previous exceptions.
@@ -117,6 +151,36 @@ The errors are written with plain SQL on a second connection to the database, bu
 Recording never breaks the application. When the database does not answer, nothing is saved (the log files keep the error) and the bundle stops trying until the end of the request (or the next message of a worker), so a broken database does not slow down each error. `austral.log.recorder` gives the reason with `getLastFailure()`.
 
 The names of the columns are fixed (the bundle writes them): an application can add columns to its entities, not rename these.
+
+## Administration
+
+With [austral/admin-bundle](https://github.com/austral-project/admin-bundle), the module **Log › Errors** (`log/errors`) is added to the back office (`src/Bridge/Admin/`), nothing to configure:
+
+- the list of the errors, the last seen first: status, level, error, message, occurrences, last seen; filters on the status, the level and the date of the last occurrence, search in the message, the class, the file and the channel; export CSV and JSON;
+- the page of an error (action `show`): its details, its last 20 occurrences with their request, their trace and their context;
+- the changes of status, from the list and from the page of an error (action `status`, POST with the CSRF token of the admin), through `austral.log.status_manager`: the date of the change is saved and `austral.log.status_changed` is dispatched;
+- delete an error (with its occurrences) or all the errors;
+- the checks of the configuration page: recording enabled, tables readable, number of new errors.
+
+The errors are written by the bundle only: no creation and no form.
+
+| Action | Role |
+|---|---|
+| list | `ROLE_LOG_ERRORS` (and `ROLE_LOG` for the container) |
+| page of an error | `ROLE_LOG_ERRORS_SHOW` |
+| change the status | `ROLE_LOG_ERRORS_STATUS` |
+| delete, delete all | `ROLE_LOG_ERRORS_DELETE`, `ROLE_LOG_ERRORS_TRUNCATE` |
+| export | `ROLE_LOG_ERRORS_DOWNLOAD` |
+
+`php bin/console austral:admin:roles` creates these roles. The page of an error is the template `@AustralLog/admin/error.html.twig`, to override in `templates/bundles/AustralLogBundle/admin/error.html.twig`. The module is changed or disabled in the configuration of admin-bundle:
+
+```yaml
+austral_admin:
+  modules:
+    log:
+      children:
+        errors: { enabled: false }
+```
 
 ## Documentation
 

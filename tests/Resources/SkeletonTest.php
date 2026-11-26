@@ -54,7 +54,7 @@ final class SkeletonTest extends TestCase
   {
     $connection = new LogKit()->doctrine->getConnection();
 
-    self::assertSame(['channel', 'exception_class', 'file', 'fingerprint', 'first_seen', 'id', 'last_seen', 'level', 'line', 'message', 'occurrences', 'regressed_at', 'status', 'status_changed_at'], $this->columns($connection, 'austral_log_error'));
+    self::assertSame(['channel', 'exception_class', 'file', 'fingerprint', 'first_seen', 'id', 'last_seen', 'level', 'line', 'message', 'notified_at', 'occurrences', 'regressed_at', 'status', 'status_changed_at'], $this->columns($connection, 'austral_log_error'));
     self::assertSame(['context', 'environment', 'error_id', 'id', 'level', 'message', 'method', 'occurred_at', 'route', 'trace', 'url', 'user_id'], $this->columns($connection, 'austral_log_error_occurrence'));
 
     $foreignKeys = $connection->fetchAllAssociative("PRAGMA foreign_key_list('austral_log_error_occurrence')");

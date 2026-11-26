@@ -23,6 +23,7 @@ use Austral\LogBundle\Purge\ErrorPurger;
 use Austral\LogBundle\Record\ErrorRecord;
 use Austral\LogBundle\Record\ErrorRecorder;
 use Austral\LogBundle\Record\ErrorRecordFactory;
+use Austral\LogBundle\Report\ErrorReporter;
 use Austral\LogBundle\Repository\ErrorLogRepository;
 use Austral\LogBundle\Status\StatusManager;
 use Austral\LogBundle\Tests\Fixtures\Entity\ErrorLog;
@@ -39,6 +40,8 @@ use Doctrine\ORM\Tools\ResolveTargetEntityListener;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
 
 /**
  * The services of the bundle on a SQLite database in a temporary file, as the container wires them.
@@ -63,6 +66,7 @@ final class LogKit
   public readonly ErrorLogEntityManager $errorManager;
   public readonly StatusManager $statuses;
   public readonly ErrorPurger $purger;
+  public readonly SingleManagerRegistry $registry;
 
   public function __construct(int $occurrencesLimit = 50, bool $withSchema = true)
   {
@@ -97,7 +101,7 @@ final class LogKit
     $this->sanitizer = new Sanitizer();
     $this->fingerprints = new FingerprintGenerator(self::PROJECT_DIR);
     $this->factory = new ErrorRecordFactory($this->fingerprints, $this->sanitizer, new ContextCollector($this->sanitizer, $this->requestStack), 'prod');
-    $registry = new SingleManagerRegistry($this->doctrine);
+    $this->registry = $registry = new SingleManagerRegistry($this->doctrine);
     $this->recorder = new ErrorRecorder(fn (): Connection => $this->logConnection, fn (): SingleManagerRegistry => $registry, ErrorLog::class, ErrorOccurrence::class, $occurrencesLimit);
 
     $this->clock = new FrozenClock('2026-11-26 10:00:00');
@@ -135,6 +139,25 @@ final class LogKit
       'occurredAt' => new \DateTimeImmutable('2026-11-26 10:00:00'),
       'environment' => 'prod',
     ]);
+  }
+
+  /**
+   * The reporter of the bundle, with the templates of the bundle and a fake mailer.
+   */
+  public function reporter(FakeMailer $mailer, string $frequency = 'daily', int $limit = 50): ErrorReporter
+  {
+    return new ErrorReporter($this->registry, $mailer, self::twig(), ErrorLog::class, $frequency, ['dev@austral.dev', 'ops@austral.dev'], 'no-reply@austral.dev', 'Errors of the site', $limit, 'prod', $this->clock);
+  }
+
+  /**
+   * Twig with the templates of the bundle (@AustralLog), as TwigBundle registers them.
+   */
+  public static function twig(): Environment
+  {
+    $loader = new FilesystemLoader();
+    $loader->addPath(__DIR__.'/../../src/Resources/views', 'AustralLog');
+
+    return new Environment($loader, ['strict_variables' => true]);
   }
 
   /**

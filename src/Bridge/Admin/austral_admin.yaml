@@ -1,0 +1,35 @@
+# Module of log-bundle in admin-bundle, added before the configuration of the application
+# (AustralLogExtension::prepend(), only when admin-bundle is enabled). The application changes or disables it in
+# config/packages/austral_admin.yaml:
+#
+#   austral_admin:
+#     modules:
+#       log:
+#         children:
+#           errors: { enabled: false }
+#
+# Roles: ROLE_LOG (container), ROLE_LOG_ERRORS (list), ROLE_LOG_ERRORS_SHOW, ROLE_LOG_ERRORS_STATUS,
+# ROLE_LOG_ERRORS_DELETE, ROLE_LOG_ERRORS_TRUNCATE, ROLE_LOG_ERRORS_DOWNLOAD.
+austral_admin:
+  modules:
+    log:
+      name:                       Log
+      picto:                      austral-picto-alert
+      route:                      log
+      navigation:
+        position:                 2000
+      children:
+        errors:
+          name:                   Errors
+          picto:                  austral-picto-alert
+          pictoTile:              alert
+          route:                  errors
+          class:                  Austral\LogBundle\Bridge\Admin\ErrorLogAdmin
+          entity_manager:         austral.entity_manager.error_log
+          translate:              female_c
+          truncate:               true
+          downloadFormats:        [ csv, json ]
+          extendActions:
+            show:                 show
+            status:               changeStatus
+          disabledActions:        [ create, edit, duplicate, toggle, sort ]

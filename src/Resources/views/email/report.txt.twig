@@ -1,0 +1,25 @@
+{#
+  Email report of austral:log:report (text version).
+  Override it in templates/bundles/AustralLogBundle/email/report.txt.twig.
+  Variables: report (Austral\LogBundle\Report\ErrorReport), subject.
+#}
+{% autoescape false %}
+{{ subject }}
+
+{% if report.since %}Since {{ report.since|date('Y-m-d H:i') }}{% else %}First report{% endif %}, until {{ report.until|date('Y-m-d H:i') }}: {{ report.newCount }} new, {{ report.regressionCount }} {{ report.regressionCount == 1 ? 'regression' : 'regressions' }}{% if report.moreCount > 0 %}, and {{ report.moreCount }} more not listed{% endif %}.
+{% for row in report.rows %}
+
+- [{{ row.regression ? 'Regression' : 'New' }}] {{ row.level }} · {{ row.channel }} · {{ row.occurrences }} occurrence(s), last seen {{ row.lastSeen|date('Y-m-d H:i') }}
+  {% if row.class %}{{ row.class }}: {% endif %}{{ row.message|length > 300 ? row.message|slice(0, 300) ~ '…' : row.message }}
+{% if row.file %}  {{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}
+
+{% endif %}
+{% endfor %}
+{% if report.moreCount > 0 %}
+
+{{ report.moreCount }} more {{ report.moreCount == 1 ? 'error is' : 'errors are' }} not listed: see the back office.
+{% endif %}
+
+--
+Sent by austral/log-bundle ({{ report.environment }}).
+{% endautoescape %}

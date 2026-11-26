@@ -1,0 +1,26 @@
+# Services of the email report, loaded only when "austral_log.report.enabled" is true (AustralLogExtension).
+services:
+
+  Austral\LogBundle\Report\ErrorReporter:
+    arguments:
+      $doctrine: '@doctrine'
+      $mailer: '@mailer'
+      $twig: '@twig'
+      $errorClass: '%austral.entity.error_log.class%'
+      $frequency: '%austral_log.report.frequency%'
+      $recipients: '%austral_log.report.recipients%'
+      $from: '%austral_log.report.from%'
+      $subject: '%austral_log.report.subject%'
+      $limit: '%austral_log.report.limit%'
+      $environment: '%kernel.environment%'
+      $clock: '@?clock'
+
+  austral.log.reporter:
+    alias: Austral\LogBundle\Report\ErrorReporter
+    public: true
+
+  Austral\LogBundle\Command\ReportCommand:
+    arguments:
+      $reporter: '@Austral\LogBundle\Report\ErrorReporter'
+    tags:
+      - { name: console.command, command: 'austral:log:report' }

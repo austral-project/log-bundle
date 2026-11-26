@@ -1,6 +1,27 @@
 {
   "symbol-whitelist": [
-    "Symfony\\Component\\Security\\Core\\Authentication\\Token\\Storage\\TokenStorageInterface"
+    "Austral\\AdminBundle\\Admin\\Admin",
+    "Austral\\AdminBundle\\Configuration\\ConfigurationCheck",
+    "Austral\\AdminBundle\\DependencyInjection\\AdminModulesPrepender",
+    "Austral\\AdminBundle\\Event\\ConfigurationCheckEvent",
+    "Austral\\AdminBundle\\Event\\FilterAdminEvent",
+    "Austral\\AdminBundle\\Event\\ListAdminEvent",
+    "Austral\\AdminBundle\\Event\\PageAdminEvent",
+    "Austral\\AdminBundle\\Event\\QueryAdminEvent",
+    "Austral\\AdminBundle\\Routing\\AdminUrlGenerator",
+    "Austral\\FilterBundle\\Filter\\ChoiceFilter",
+    "Austral\\FilterBundle\\Filter\\EnumFilter",
+    "Austral\\FilterBundle\\Filter\\PeriodFilter",
+    "Austral\\FilterBundle\\Filter\\SearchFilter",
+    "Austral\\ListBundle\\Action\\Action",
+    "Austral\\ListBundle\\Column\\ChoicesColumn",
+    "Austral\\ListBundle\\Column\\DateColumn",
+    "Austral\\ListBundle\\Column\\ValueColumn",
+    "Symfony\\Component\\Mailer\\MailerInterface",
+    "Symfony\\Component\\Mime\\Address",
+    "Symfony\\Component\\Mime\\Email",
+    "Symfony\\Component\\Security\\Core\\Authentication\\Token\\Storage\\TokenStorageInterface",
+    "Twig\\Environment"
   ],
   "php-core-extensions": [
     "Core",

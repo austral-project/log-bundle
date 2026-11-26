@@ -1,0 +1,46 @@
+# Traductions de log-bundle dans l'admin (domaine austral), clés à plat.
+'pages.names.log.singular': Journal
+'pages.names.log.plural': Journaux
+'pages.names.logErrors.singular': Erreur
+'pages.names.logErrors.plural': Erreurs
+
+'actions.show': Voir
+'log.actions.progress': En cours
+'log.actions.resolve': Résolue
+'log.actions.ignore': Ignorer
+'log.actions.archive': Archiver
+'log.actions.reopen': Rouvrir
+
+'log.status.new': Nouvelle
+'log.status.in_progress': En cours
+'log.status.resolved': Résolue
+'log.status.ignored': Ignorée
+'log.status.archived': Archivée
+
+'log.fields.search': Recherche
+'log.fields.status': Statut
+'log.fields.level': Niveau
+'log.fields.channel': Canal
+'log.fields.exceptionClass': Erreur
+'log.fields.message': Message
+'log.fields.file': Fichier
+'log.fields.occurrences': Occurrences
+'log.fields.firstSeen': Première fois
+'log.fields.lastSeen': Dernière fois
+'log.fields.regressedAt': Revenue le
+'log.fields.statusChangedAt': Statut changé le
+'log.fields.url': URL
+'log.fields.route': Route
+'log.fields.userId': Utilisateur
+
+'log.occurrences.title': '{0} Aucune occurrence conservée|{1} La dernière occurrence|]1,Inf[ Les %count% dernières occurrences'
+'log.occurrences.none': Aucune occurrence conservée.
+'log.occurrences.context': Contexte
+
+'configuration.categories.log': Erreurs du site
+'log.configuration.enabled.entitled': Enregistrement des erreurs
+'log.configuration.enabled.description': 'Les erreurs du site sont enregistrées (« austral_log.enabled »).'
+'log.configuration.tables.entitled': Tables des erreurs
+'log.configuration.tables.description': 'Les tables austral_log_error et austral_log_error_occurrence ne peuvent pas être lues : créez-les avec les migrations.'
+'log.configuration.new.entitled': Nouvelles erreurs
+'log.configuration.new.description': Les erreurs pas encore traitées (statut « Nouvelle »).

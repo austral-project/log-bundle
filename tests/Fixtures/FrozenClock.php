@@ -16,7 +16,7 @@ namespace Austral\LogBundle\Tests\Fixtures;
 use Psr\Clock\ClockInterface;
 
 /**
- * A clock that does not move: the dates of the tests are known.
+ * A clock that does not move by itself: the dates of the tests are known.
  */
 final class FrozenClock implements ClockInterface
 {
@@ -30,5 +30,13 @@ final class FrozenClock implements ClockInterface
   public function now(): \DateTimeImmutable
   {
     return $this->now;
+  }
+
+  /**
+   * The clock moves only when the test says so.
+   */
+  public function setNow(string $now): void
+  {
+    $this->now = new \DateTimeImmutable($now);
   }
 }

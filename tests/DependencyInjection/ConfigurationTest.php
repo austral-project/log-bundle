@@ -33,6 +33,14 @@ final class ConfigurationTest extends TestCase
         'after_days' => 90,
         'statuses' => ['resolved', 'archived'],
       ],
+      'report' => [
+        'enabled' => false,
+        'frequency' => 'daily',
+        'recipients' => [],
+        'from' => null,
+        'subject' => 'Errors of the site',
+        'limit' => 50,
+      ],
       'entities' => [
         'error' => 'App\Entity\Austral\LogBundle\ErrorLog',
         'occurrence' => 'App\Entity\Austral\LogBundle\ErrorOccurrence',
@@ -106,6 +114,38 @@ final class ConfigurationTest extends TestCase
   {
     $this->expectException(InvalidConfigurationException::class);
     $this->process(['purge' => $purge]);
+  }
+
+  public function testTheReport(): void
+  {
+    $report = $this->process(['report' => ['enabled' => true, 'frequency' => 'hourly', 'recipients' => ['dev@austral.dev'], 'from' => 'no-reply@austral.dev', 'limit' => 10]])['report'];
+
+    self::assertTrue($report['enabled']);
+    self::assertSame('hourly', $report['frequency']);
+    self::assertSame(['dev@austral.dev'], $report['recipients']);
+    self::assertSame('no-reply@austral.dev', $report['from']);
+    self::assertSame(10, $report['limit']);
+  }
+
+  /**
+   * @return iterable<string, array{array<string, mixed>}>
+   */
+  public static function invalidReports(): iterable
+  {
+    yield 'no recipient' => [['enabled' => true, 'from' => 'no-reply@austral.dev']];
+    yield 'no sender' => [['enabled' => true, 'recipients' => ['dev@austral.dev']]];
+    yield 'monthly' => [['frequency' => 'monthly']];
+    yield 'no limit' => [['limit' => 0]];
+  }
+
+  /**
+   * @param array<string, mixed> $report
+   */
+  #[DataProvider('invalidReports')]
+  public function testAnInvalidReportIsRefused(array $report): void
+  {
+    $this->expectException(InvalidConfigurationException::class);
+    $this->process(['report' => $report]);
   }
 
   public function testAtLeastOneOccurrenceIsKept(): void

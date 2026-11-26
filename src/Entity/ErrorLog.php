@@ -120,9 +120,17 @@ abstract class ErrorLog extends Entity implements ErrorLogInterface
   protected ?\DateTimeImmutable $statusChangedAt = null;
 
   /**
+   * Last email report that listed the error (austral:log:report).
+   *
+   * @var \DateTimeImmutable|null
+   */
+  #[ORM\Column(name: 'notified_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+  protected ?\DateTimeImmutable $notifiedAt = null;
+
+  /**
    * @var Collection<int, ErrorOccurrenceInterface>
    */
-  #[ORM\OneToMany(targetEntity: ErrorOccurrenceInterface::class, mappedBy: 'error', fetch: 'EXTRA_LAZY')]
+  #[ORM\OneToMany(targetEntity: ErrorOccurrenceInterface::class, mappedBy: 'error', cascade: ['remove'], fetch: 'EXTRA_LAZY')]
   #[ORM\OrderBy(['id' => 'DESC'])]
   protected Collection $occurrenceList;
 
@@ -285,6 +293,14 @@ abstract class ErrorLog extends Entity implements ErrorLogInterface
   public function getStatusChangedAt(): ?\DateTimeImmutable
   {
     return $this->statusChangedAt;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getNotifiedAt(): ?\DateTimeImmutable
+  {
+    return $this->notifiedAt;
   }
 
   /**

@@ -24,6 +24,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  *   connection:         Doctrine connection of the tables; the errors are written by a second connection
  *   occurrences_limit:  occurrences kept by error (the last ones)
  *   purge:              austral:log:purge deletes the resolved and archived errors after X days
+ *   report:             austral:log:report sends the new errors and the regressions by email (symfony/mailer, twig)
  *   entities:           classes of the application (error, occurrence)
  *
  * @author Matthieu Beurel <matthieu@austral.dev>
@@ -65,6 +66,24 @@ class Configuration implements ConfigurationInterface
                 ->always(static fn (array $statuses): array => array_values(array_unique($statuses)))
               ->end()
             ->end()
+          ->end()
+        ->end()
+        ->arrayNode('report')
+          ->addDefaultsIfNotSet()
+          ->children()
+            ->booleanNode('enabled')->defaultFalse()->info('Defines austral:log:report; needs symfony/mailer and twig/twig')->end()
+            ->enumNode('frequency')->values(['hourly', 'daily', 'weekly'])->defaultValue('daily')->info('At most one report by period; run the command every hour')->end()
+            ->arrayNode('recipients')
+              ->info('Email addresses of the report')
+              ->scalarPrototype()->cannotBeEmpty()->end()
+            ->end()
+            ->scalarNode('from')->defaultNull()->info('Sender of the report')->end()
+            ->scalarNode('subject')->cannotBeEmpty()->defaultValue('Errors of the site')->end()
+            ->integerNode('limit')->min(1)->max(500)->defaultValue(50)->info('Errors listed in the email; the others are counted')->end()
+          ->end()
+          ->validate()
+            ->ifTrue(static fn (array $report): bool => $report['enabled'] && ([] === $report['recipients'] || !\is_string($report['from']) || '' === $report['from']))
+            ->thenInvalid('"austral_log.report" needs "recipients" and "from" when it is enabled.')
           ->end()
         ->end()
         ->arrayNode('entities')

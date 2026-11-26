@@ -1,0 +1,79 @@
+{#
+ # This file is part of the Austral Log Bundle package.
+ #
+ # (c) Austral <support@austral.dev>
+ #
+ # Page of an error in the admin (action "show" of the module log/errors). Variables: module, error, level,
+ # occurrences (the last ones), statuses (name => label, url, value) and list_url.
+ # Override it in templates/bundles/AustralLogBundle/admin/error.html.twig.
+ #}
+{%- extends '@AustralAdmin/layout.html.twig' -%}
+{%- trans_default_domain 'austral' -%}
+
+{%- block title -%}{{ error.exceptionClass ?? error.channel }} - {{ parent() }}{%- endblock -%}
+
+{%- block content -%}
+  <article class="austral-log-error">
+    <header>
+      <p><a href="{{ list_url }}">{{ 'actions.back'|trans }}</a></p>
+      <h1>{{ error.exceptionClass ?? error.channel }}</h1>
+      <p class="austral-log-error-message">{{ error.message }}</p>
+    </header>
+
+    <dl class="austral-log-error-details">
+      <dt>{{ 'log.fields.status'|trans }}</dt><dd>{{ ('log.status.' ~ error.status.value)|trans }}</dd>
+      <dt>{{ 'log.fields.level'|trans }}</dt><dd>{{ level }}</dd>
+      <dt>{{ 'log.fields.channel'|trans }}</dt><dd>{{ error.channel }}</dd>
+      {%- if error.file -%}<dt>{{ 'log.fields.file'|trans }}</dt><dd><code>{{ error.file }}{% if error.line %}:{{ error.line }}{% endif %}</code></dd>{%- endif -%}
+      <dt>{{ 'log.fields.occurrences'|trans }}</dt><dd>{{ error.occurrences }}</dd>
+      <dt>{{ 'log.fields.firstSeen'|trans }}</dt><dd>{{ error.firstSeen|date('Y-m-d H:i:s') }}</dd>
+      <dt>{{ 'log.fields.lastSeen'|trans }}</dt><dd>{{ error.lastSeen|date('Y-m-d H:i:s') }}</dd>
+      {%- if error.regressedAt -%}<dt>{{ 'log.fields.regressedAt'|trans }}</dt><dd>{{ error.regressedAt|date('Y-m-d H:i:s') }}</dd>{%- endif -%}
+      {%- if error.statusChangedAt -%}<dt>{{ 'log.fields.statusChangedAt'|trans }}</dt><dd>{{ error.statusChangedAt|date('Y-m-d H:i:s') }}</dd>{%- endif -%}
+    </dl>
+
+    {%- if statuses is not empty -%}
+      <div class="austral-log-error-statuses">
+        {%- for name, status in statuses -%}
+          <form method="post" action="{{ status.url }}" class="austral-admin-inline">
+            <input type="hidden" name="_token" value="{{ austral_admin_csrf_token() }}">
+            <input type="hidden" name="value" value="{{ status.value }}">
+            <input type="hidden" name="_back" value="show">
+            <button type="submit" class="austral-log-status-{{ name }}">{{ status.label|trans }}</button>
+          </form>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    <h2>{{ 'log.occurrences.title'|trans({'%count%': occurrences|length}) }}</h2>
+    {%- for occurrence in occurrences -%}
+      <section class="austral-log-occurrence">
+        <h3>{{ occurrence.occurredAt|date('Y-m-d H:i:s') }} · {{ occurrence.environment }}</h3>
+        <dl>
+          {%- if occurrence.url -%}<dt>{{ 'log.fields.url'|trans }}</dt><dd>{{ occurrence.method }} <code>{{ occurrence.url }}</code></dd>{%- endif -%}
+          {%- if occurrence.route -%}<dt>{{ 'log.fields.route'|trans }}</dt><dd><code>{{ occurrence.route }}</code></dd>{%- endif -%}
+          {%- if occurrence.userId -%}<dt>{{ 'log.fields.userId'|trans }}</dt><dd>{{ occurrence.userId }}</dd>{%- endif -%}
+          {%- if occurrence.message != error.message -%}<dt>{{ 'log.fields.message'|trans }}</dt><dd>{{ occurrence.message }}</dd>{%- endif -%}
+        </dl>
+        {%- for exception in occurrence.trace -%}
+          <details{% if loop.first %} open{% endif %}>
+            <summary><code>{{ exception.class }}</code>: {{ exception.message }} <code>{{ exception.file }}:{{ exception.line }}</code></summary>
+            <ol class="austral-log-frames">
+              {%- for frame in exception.frames -%}
+                <li><code>{{ frame.function }}()</code>{% if frame.file %} <code>{{ frame.file }}{% if frame.line %}:{{ frame.line }}{% endif %}</code>{% endif %}</li>
+              {%- endfor -%}
+            </ol>
+          </details>
+        {%- endfor -%}
+        {%- if occurrence.context is not empty -%}
+          <details>
+            <summary>{{ 'log.occurrences.context'|trans }}</summary>
+            <pre>{{ occurrence.context|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE')) }}</pre>
+          </details>
+        {%- endif -%}
+      </section>
+    {%- else -%}
+      <p>{{ 'log.occurrences.none'|trans }}</p>
+    {%- endfor -%}
+  </article>
+{%- endblock -%}

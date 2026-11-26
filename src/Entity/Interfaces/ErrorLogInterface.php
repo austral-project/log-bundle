@@ -133,6 +133,14 @@ interface ErrorLogInterface extends EntityInterface
   public function getStatusChangedAt(): ?\DateTimeImmutable;
 
   /**
+   * getNotifiedAt
+   * Last email report that listed the error; a regression after this date is reported again.
+   *
+   * @return \DateTimeImmutable|null
+   */
+  public function getNotifiedAt(): ?\DateTimeImmutable;
+
+  /**
    * getOccurrenceList
    * The occurrences kept, the last one first.
    *
